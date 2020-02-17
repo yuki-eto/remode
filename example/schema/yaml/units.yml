@@ -1,0 +1,76 @@
+name: units
+columns:
+- name: id
+  column_type: bigint
+  entity_type: uint64
+  size: 20
+  is_auto_increment: false
+  is_unsigned: true
+  is_not_null: true
+  default_value: ""
+  is_primary_key: true
+  unique_index_keys: []
+  index_keys: []
+- name: type
+  column_type: enum
+  entity_type: string
+  size: 0
+  is_auto_increment: false
+  is_unsigned: false
+  is_not_null: true
+  default_value: ""
+  is_primary_key: false
+  unique_index_keys: []
+  index_keys:
+  - type
+- name: rarity
+  column_type: enum
+  entity_type: string
+  size: 0
+  is_auto_increment: false
+  is_unsigned: false
+  is_not_null: true
+  default_value: ""
+  is_primary_key: false
+  unique_index_keys: []
+  index_keys:
+  - rarity
+- name: name
+  column_type: varchar
+  entity_type: string
+  size: 255
+  is_auto_increment: false
+  is_unsigned: false
+  is_not_null: true
+  default_value: ""
+  is_primary_key: false
+  unique_index_keys: []
+  index_keys: []
+- name: max_count
+  column_type: smallint
+  entity_type: uint16
+  size: 5
+  is_auto_increment: false
+  is_unsigned: true
+  is_not_null: true
+  default_value: ""
+  is_primary_key: false
+  unique_index_keys: []
+  index_keys: []
+indexes:
+- name: PRIMARY
+  is_primary_key: true
+  is_unique: true
+  columns:
+  - id
+- name: type
+  is_primary_key: false
+  is_unique: false
+  columns:
+  - type
+- name: rarity
+  is_primary_key: false
+  is_unique: false
+  columns:
+  - rarity
+is_read_only: true
