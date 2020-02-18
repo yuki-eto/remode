@@ -1,11 +1,11 @@
 package remodel
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 
 	"github.com/gertd/go-pluralize"
+	"github.com/juju/errors"
 	"github.com/xwb1989/sqlparser"
 )
 
@@ -42,7 +42,7 @@ type Index struct {
 func (t *Table) Parse(s string) error {
 	stmt, err := sqlparser.Parse(s)
 	if err != nil {
-		return err
+		return errors.Trace(err)
 	}
 	ddl, ok := stmt.(*sqlparser.DDL)
 	if !ok {
@@ -50,6 +50,9 @@ func (t *Table) Parse(s string) error {
 	}
 	if ddl.Action != "create" {
 		return errors.New("not create table")
+	}
+	if ddl.TableSpec == nil {
+		return errors.New("cannot find table spec")
 	}
 
 	p := pluralize.NewClient()
