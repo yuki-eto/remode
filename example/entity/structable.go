@@ -8,7 +8,10 @@ type Structable interface {
 }
 
 func Structables() map[string]Structable {
-	return map[string]Structable{"users": new(User)}
+	return map[string]Structable{
+		"user_friends": new(UserFriend),
+		"users":        new(User),
+	}
 }
 func ReadOnlyStructables() map[string]Structable {
 	return map[string]Structable{"items": new(Item)}

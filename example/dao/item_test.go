@@ -20,7 +20,7 @@ func TestItemImpl(t *testing.T) {
 	}
 
 	t.Run("find_all", func(t *testing.T) {
-		d := NewItem(fn, 0)
+		d := NewItem(fn)
 		items, err := d.FindsAll()
 		if err != nil {
 			t.Fatal(err)
@@ -35,7 +35,7 @@ func TestItemImpl(t *testing.T) {
 	})
 
 	t.Run("find_by_id", func(t *testing.T) {
-		d := NewItem(fn, 0)
+		d := NewItem(fn)
 		const id = uint64(1)
 		item, err := d.FindByID(id)
 		if err != nil {
@@ -47,7 +47,7 @@ func TestItemImpl(t *testing.T) {
 	})
 
 	t.Run("find_by_ids", func(t *testing.T) {
-		d := NewItem(fn, 0)
+		d := NewItem(fn)
 		ids := []uint64{1, 3, 5}
 		items, err := d.FindByIDs(ids)
 		if err != nil {
@@ -60,7 +60,7 @@ func TestItemImpl(t *testing.T) {
 	})
 
 	t.Run("find_by_type", func(t *testing.T) {
-		d := NewItem(fn, 0)
+		d := NewItem(fn)
 		const typ = "consumable"
 		items, err := d.FindByType(typ)
 		if err != nil {
@@ -74,7 +74,7 @@ func TestItemImpl(t *testing.T) {
 	})
 
 	t.Run("find_by_rarity", func(t *testing.T) {
-		d := NewItem(fn, 0)
+		d := NewItem(fn)
 		const rarity = "SR"
 		items, err := d.FindByRarity(rarity)
 		if err != nil {

@@ -231,7 +231,7 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 	if !d.IsReadOnly && strings.HasPrefix(d.TableName, "user_") {
 		structFields = append(structFields, i("uqb").Func().Call().Params(ptr(qb)))
 		structMap[i("uqb")] = fn().Call().Params(ptr(qb)).Block(
-			rtn(qual(RapidashLib, "NewQueryBuilder").Call(lit(d.TableName)).Dot("Eq").Call(lit("user_id"), i("userID"))),
+			rtn(qual(RapidashLib, "NewQueryBuilder").Call(lit(d.TableName)).Dot("Eq").Call(lit("user_id"), i("userIDGetter").Call())),
 		)
 	}
 
@@ -245,7 +245,7 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 		i("txGetter").Add(txGetter),
 	}
 	if !d.IsReadOnly && strings.HasPrefix(d.TableName, "user_") {
-		params = append(params, i("userID").Uint64())
+		params = append(params, i("userIDGetter").Func().Call().Params(i("uint64")))
 	}
 	f.Func().Id("New" + d.Name).Params(params...).Id(d.Name).Block(
 		rtn(addr(i(structName)).Add(vals(structMap))),

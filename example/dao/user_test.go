@@ -28,7 +28,7 @@ func TestUserImpl(t *testing.T) {
 		fn := func(string) (*rapidash.Tx, error) {
 			return tx, nil
 		}
-		return NewUser(fn, 0), tx
+		return NewUser(fn), tx
 	}
 	commit := func(t *testing.T, tx *rapidash.Tx) {
 		if err := tx.Commit(); err != nil {

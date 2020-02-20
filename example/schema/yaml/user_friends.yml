@@ -1,0 +1,78 @@
+name: user_friends
+columns:
+- name: id
+  column_type: bigint
+  entity_type: uint64
+  size: 20
+  is_auto_increment: true
+  is_unsigned: true
+  is_not_null: true
+  default_value: ""
+  is_primary_key: true
+  unique_index_keys: []
+  index_keys: []
+- name: user_id
+  column_type: bigint
+  entity_type: uint64
+  size: 20
+  is_auto_increment: false
+  is_unsigned: true
+  is_not_null: true
+  default_value: ""
+  is_primary_key: false
+  unique_index_keys:
+  - user_relation
+  index_keys: []
+- name: other_user_id
+  column_type: bigint
+  entity_type: uint64
+  size: 20
+  is_auto_increment: false
+  is_unsigned: true
+  is_not_null: true
+  default_value: ""
+  is_primary_key: false
+  unique_index_keys:
+  - user_relation
+  index_keys:
+  - other_user_relation
+- name: created_at
+  column_type: datetime
+  entity_type: '*time.Time'
+  size: 0
+  is_auto_increment: false
+  is_unsigned: false
+  is_not_null: false
+  default_value: ""
+  is_primary_key: false
+  unique_index_keys: []
+  index_keys: []
+- name: updated_at
+  column_type: datetime
+  entity_type: '*time.Time'
+  size: 0
+  is_auto_increment: false
+  is_unsigned: false
+  is_not_null: false
+  default_value: ""
+  is_primary_key: false
+  unique_index_keys: []
+  index_keys: []
+indexes:
+- name: PRIMARY
+  is_primary_key: true
+  is_unique: true
+  columns:
+  - id
+- name: user_relation
+  is_primary_key: false
+  is_unique: true
+  columns:
+  - user_id
+  - other_user_id
+- name: other_user_relation
+  is_primary_key: false
+  is_unique: false
+  columns:
+  - other_user_id
+is_read_only: false
