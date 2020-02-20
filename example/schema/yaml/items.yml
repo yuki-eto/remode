@@ -1,4 +1,4 @@
-name: units
+name: items
 columns:
 - name: id
   column_type: bigint

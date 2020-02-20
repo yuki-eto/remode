@@ -1,4 +1,4 @@
-package remodel
+package assert
 
 import (
 	"reflect"

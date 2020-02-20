@@ -1,6 +1,7 @@
 package remodel
 
 import (
+	"github.com/yuki-eto/remodel/assert"
 	"strings"
 	"testing"
 )
@@ -25,33 +26,33 @@ CREATE TABLE IF NOT EXISTS users (
 			t.Fatal(err)
 		}
 
-		Equals(t, table.Name, "users")
-		False(t, table.IsReadOnly)
-		Len(t, table.Columns, 5)
-		Len(t, table.Indexes, 3)
+		assert.Equals(t, table.Name, "users")
+		assert.False(t, table.IsReadOnly)
+		assert.Len(t, table.Columns, 5)
+		assert.Len(t, table.Indexes, 3)
 
 		col := table.Columns[0]
-		Equals(t, col.Name, "id")
-		True(t, col.IsPrimaryKey)
-		True(t, col.IsNotNull)
-		Equals(t, col.EntityType, Uint64)
+		assert.Equals(t, col.Name, "id")
+		assert.True(t, col.IsPrimaryKey)
+		assert.True(t, col.IsNotNull)
+		assert.Equals(t, col.EntityType, Uint64)
 
 		col = table.Columns[2]
-		Equals(t, col.Name, "is_debug_user")
-		Equals(t, col.EntityType, Bool)
+		assert.Equals(t, col.Name, "is_debug_user")
+		assert.Equals(t, col.EntityType, Bool)
 
 		index := table.Indexes[0]
-		Equals(t, index.Name, "PRIMARY")
-		True(t, index.IsPrimaryKey)
+		assert.Equals(t, index.Name, "PRIMARY")
+		assert.True(t, index.IsPrimaryKey)
 
 		index = table.Indexes[1]
-		Equals(t, index.Name, "unique_key")
-		False(t, index.IsPrimaryKey)
-		True(t, index.IsUnique)
+		assert.Equals(t, index.Name, "unique_key")
+		assert.False(t, index.IsPrimaryKey)
+		assert.True(t, index.IsUnique)
 
 		index = table.Indexes[2]
-		Equals(t, index.Name, "key")
-		False(t, index.IsUnique)
+		assert.Equals(t, index.Name, "key")
+		assert.False(t, index.IsUnique)
 	})
 
 	t.Run("parse_read_only", func(t *testing.T) {
@@ -68,12 +69,12 @@ CREATE TABLE IF NOT EXISTS items (
 			t.Fatal(err)
 		}
 
-		True(t, table.IsReadOnly)
-		Equals(t, table.Name, "items")
-		Len(t, table.Columns, 3)
+		assert.True(t, table.IsReadOnly)
+		assert.Equals(t, table.Name, "items")
+		assert.Len(t, table.Columns, 3)
 
 		col := table.Columns[2]
-		Equals(t, col.Name, "open_at")
-		Equals(t, col.EntityType, TimePtr)
+		assert.Equals(t, col.Name, "open_at")
+		assert.Equals(t, col.EntityType, TimePtr)
 	})
 }

@@ -28,3 +28,7 @@ func CacheTx(conns ...rapidash.Connection) (*rapidash.Tx, error) {
 	tx, err := r.Begin(conns...)
 	return tx, errors.Trace(err)
 }
+
+func FlushCache() error {
+	return errors.Trace(r.Flush())
+}

@@ -58,7 +58,7 @@ func run() error {
 		}
 		return outputModel(rootDir, moduleName)
 	default:
-		fmt.Println("please input mode: [yaml|code]")
+		fmt.Println("please input mode: [yaml|entity|dao|model]")
 		return nil
 	}
 }

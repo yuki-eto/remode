@@ -1,48 +1,49 @@
 package dao
 
 import (
+	"example/entity"
+
 	"github.com/juju/errors"
-	"github.com/yuki-eto/remodel/example/entity"
 	"go.knocknote.io/rapidash"
 )
 
-type Unit interface {
-	FindsAll() (entity.Units, error)
-	FindByID(k0 uint64) (*entity.Unit, error)
-	FindByIDs(k0 []uint64) (entity.Units, error)
-	FindByType(k0 string) (entity.Units, error)
-	FindByTypes(k0 []string) (entity.Units, error)
-	FindByRarity(k0 string) (entity.Units, error)
-	FindByRarities(k0 []string) (entity.Units, error)
+type Item interface {
+	FindsAll() (entity.Items, error)
+	FindByID(k0 uint64) (*entity.Item, error)
+	FindByIDs(k0 []uint64) (entity.Items, error)
+	FindByType(k0 string) (entity.Items, error)
+	FindByTypes(k0 []string) (entity.Items, error)
+	FindByRarity(k0 string) (entity.Items, error)
+	FindByRarities(k0 []string) (entity.Items, error)
 }
 
-type UnitImpl struct {
+type ItemImpl struct {
 	tableName string
 	tx        *rapidash.Tx
 	qb        func() *rapidash.QueryBuilder
 }
 
-func NewUnit(tx *rapidash.Tx, userID uint64) Unit {
-	return &UnitImpl{
+func NewItem(tx *rapidash.Tx, userID uint64) Item {
+	return &ItemImpl{
 		qb: func() *rapidash.QueryBuilder {
-			return rapidash.NewQueryBuilder("units")
+			return rapidash.NewQueryBuilder("items")
 		},
-		tableName: "units",
+		tableName: "items",
 		tx:        tx,
 	}
 }
 
-func (d *UnitImpl) FindsAll() (entity.Units, error) {
-	e := &entity.Units{}
+func (d *ItemImpl) FindsAll() (entity.Items, error) {
+	e := &entity.Items{}
 	if err := d.tx.FindAllByTable(d.tableName, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	return *e, nil
 }
 
-func (d *UnitImpl) FindByID(k0 uint64) (*entity.Unit, error) {
+func (d *ItemImpl) FindByID(k0 uint64) (*entity.Item, error) {
 	b := d.qb().Eq("id", k0)
-	e := &entity.Unit{}
+	e := &entity.Item{}
 	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -52,45 +53,45 @@ func (d *UnitImpl) FindByID(k0 uint64) (*entity.Unit, error) {
 	return e, nil
 }
 
-func (d *UnitImpl) FindByIDs(k0 []uint64) (entity.Units, error) {
+func (d *ItemImpl) FindByIDs(k0 []uint64) (entity.Items, error) {
 	b := d.qb().In("id", k0)
-	e := &entity.Units{}
+	e := &entity.Items{}
 	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	return *e, nil
 }
 
-func (d *UnitImpl) FindByType(k0 string) (entity.Units, error) {
+func (d *ItemImpl) FindByType(k0 string) (entity.Items, error) {
 	b := d.qb().Eq("type", k0)
-	e := &entity.Units{}
+	e := &entity.Items{}
 	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	return *e, nil
 }
 
-func (d *UnitImpl) FindByTypes(k0 []string) (entity.Units, error) {
+func (d *ItemImpl) FindByTypes(k0 []string) (entity.Items, error) {
 	b := d.qb().In("type", k0)
-	e := &entity.Units{}
+	e := &entity.Items{}
 	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	return *e, nil
 }
 
-func (d *UnitImpl) FindByRarity(k0 string) (entity.Units, error) {
+func (d *ItemImpl) FindByRarity(k0 string) (entity.Items, error) {
 	b := d.qb().Eq("rarity", k0)
-	e := &entity.Units{}
+	e := &entity.Items{}
 	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	return *e, nil
 }
 
-func (d *UnitImpl) FindByRarities(k0 []string) (entity.Units, error) {
+func (d *ItemImpl) FindByRarities(k0 []string) (entity.Items, error) {
 	b := d.qb().In("rarity", k0)
-	e := &entity.Units{}
+	e := &entity.Items{}
 	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}

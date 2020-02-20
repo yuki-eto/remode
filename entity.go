@@ -1,7 +1,6 @@
 package remodel
 
 import (
-	"fmt"
 	"io"
 	"strings"
 
@@ -155,8 +154,6 @@ type Entities []*Entity
 func (e *Entities) GenerateStructableCode(writer io.Writer, moduleName string) error {
 	f := newFile("entity")
 
-	entityPackage := fmt.Sprintf("%s/entity", moduleName)
-	f.ImportName(entityPackage, "entity")
 	f.ImportName(RapidashLib, "rapidash")
 
 	f.Type().Id("Structable").Interface(
@@ -167,9 +164,9 @@ func (e *Entities) GenerateStructableCode(writer io.Writer, moduleName string) e
 	roTables := cmap{}
 	for _, v := range *e {
 		if v.IsReadOnly {
-			roTables[lit(v.TableName)] = op("new").Call(qual(entityPackage, v.Name))
+			roTables[lit(v.TableName)] = op("new").Call(i(v.Name))
 		} else {
-			tables[lit(v.TableName)] = op("new").Call(qual(entityPackage, v.Name))
+			tables[lit(v.TableName)] = op("new").Call(i(v.Name))
 		}
 	}
 

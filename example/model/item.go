@@ -2,37 +2,37 @@
 package model
 
 import (
+	"example/dao"
+	"example/entity"
 	"sort"
 
 	"github.com/juju/errors"
-	"github.com/yuki-eto/remodel/example/dao"
-	"github.com/yuki-eto/remodel/example/entity"
 )
 
-type UnitImpl struct {
-	unitDao dao.Unit
+type ItemImpl struct {
+	itemDao dao.Item
 }
 
-func (m *UnitImpl) createInstance(e *entity.Unit) *UnitInstance {
-	return &UnitInstance{Unit: e}
+func (m *ItemImpl) createInstance(e *entity.Item) *ItemInstance {
+	return &ItemInstance{Item: e}
 }
 
-type UnitInstance struct {
-	*entity.Unit
+type ItemInstance struct {
+	*entity.Item
 }
-type UnitsInstance struct {
-	values []*UnitInstance
-}
-
-func NewUnitsInstance() *UnitsInstance {
-	return &UnitsInstance{values: []*UnitInstance{}}
+type ItemsInstance struct {
+	values []*ItemInstance
 }
 
-func (i *UnitsInstance) Add(v *UnitInstance) {
+func NewItemsInstance() *ItemsInstance {
+	return &ItemsInstance{values: []*ItemInstance{}}
+}
+
+func (i *ItemsInstance) Add(v *ItemInstance) {
 	i.values = append(i.values, v)
 }
 
-func (i *UnitsInstance) FindByID(id uint64) *UnitInstance {
+func (i *ItemsInstance) FindByID(id uint64) *ItemInstance {
 	for _, v := range i.values {
 		if v.ID == id {
 			return v
@@ -41,8 +41,8 @@ func (i *UnitsInstance) FindByID(id uint64) *UnitInstance {
 	return nil
 }
 
-func (i *UnitsInstance) FilterBy(f func(*UnitInstance) bool) *UnitsInstance {
-	instance := NewUnitsInstance()
+func (i *ItemsInstance) FilterBy(f func(*ItemInstance) bool) *ItemsInstance {
+	instance := NewItemsInstance()
 	for _, v := range i.values {
 		if f(v) {
 			instance.Add(v)
@@ -51,13 +51,13 @@ func (i *UnitsInstance) FilterBy(f func(*UnitInstance) bool) *UnitsInstance {
 	return instance
 }
 
-func (i *UnitsInstance) Each(f func(*UnitInstance)) {
+func (i *ItemsInstance) Each(f func(*ItemInstance)) {
 	for _, v := range i.values {
 		f(v)
 	}
 }
 
-func (i *UnitsInstance) EachWithError(f func(*UnitInstance) error) error {
+func (i *ItemsInstance) EachWithError(f func(*ItemInstance) error) error {
 	for _, v := range i.values {
 		if err := f(v); err != nil {
 			return errors.Trace(err)
@@ -66,22 +66,22 @@ func (i *UnitsInstance) EachWithError(f func(*UnitInstance) error) error {
 	return nil
 }
 
-func (i *UnitsInstance) First() *UnitInstance {
+func (i *ItemsInstance) First() *ItemInstance {
 	if len(i.values) == 0 {
 		return nil
 	}
 	return i.values[0]
 }
 
-func (i *UnitsInstance) At(idx int) *UnitInstance {
+func (i *ItemsInstance) At(idx int) *ItemInstance {
 	if len(i.values) < idx {
 		return nil
 	}
 	return i.values[idx]
 }
 
-func (i *UnitsInstance) FilterByID(c uint64) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) FilterByID(c uint64) *ItemsInstance {
+	s := NewItemsInstance()
 	for _, v := range i.values {
 		if v.ID == c {
 			s.Add(v)
@@ -90,8 +90,8 @@ func (i *UnitsInstance) FilterByID(c uint64) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) SortByID(isDesc bool) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) SortByID(isDesc bool) *ItemsInstance {
+	s := NewItemsInstance()
 	s.values = i.values
 	sort.SliceStable(s.values, func(i, j int) bool {
 		if isDesc {
@@ -102,16 +102,16 @@ func (i *UnitsInstance) SortByID(isDesc bool) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) IDs() []uint64 {
+func (i *ItemsInstance) IDs() []uint64 {
 	s := []uint64{}
-	i.Each(func(v *UnitInstance) {
+	i.Each(func(v *ItemInstance) {
 		s = append(s, v.ID)
 	})
 	return s
 }
 
-func (i *UnitsInstance) FilterByType(c string) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) FilterByType(c string) *ItemsInstance {
+	s := NewItemsInstance()
 	for _, v := range i.values {
 		if v.Type == c {
 			s.Add(v)
@@ -120,8 +120,8 @@ func (i *UnitsInstance) FilterByType(c string) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) SortByType(isDesc bool) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) SortByType(isDesc bool) *ItemsInstance {
+	s := NewItemsInstance()
 	s.values = i.values
 	sort.SliceStable(s.values, func(i, j int) bool {
 		if isDesc {
@@ -132,16 +132,16 @@ func (i *UnitsInstance) SortByType(isDesc bool) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) Types() []string {
+func (i *ItemsInstance) Types() []string {
 	s := []string{}
-	i.Each(func(v *UnitInstance) {
+	i.Each(func(v *ItemInstance) {
 		s = append(s, v.Type)
 	})
 	return s
 }
 
-func (i *UnitsInstance) FilterByRarity(c string) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) FilterByRarity(c string) *ItemsInstance {
+	s := NewItemsInstance()
 	for _, v := range i.values {
 		if v.Rarity == c {
 			s.Add(v)
@@ -150,8 +150,8 @@ func (i *UnitsInstance) FilterByRarity(c string) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) SortByRarity(isDesc bool) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) SortByRarity(isDesc bool) *ItemsInstance {
+	s := NewItemsInstance()
 	s.values = i.values
 	sort.SliceStable(s.values, func(i, j int) bool {
 		if isDesc {
@@ -162,16 +162,16 @@ func (i *UnitsInstance) SortByRarity(isDesc bool) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) Rarities() []string {
+func (i *ItemsInstance) Rarities() []string {
 	s := []string{}
-	i.Each(func(v *UnitInstance) {
+	i.Each(func(v *ItemInstance) {
 		s = append(s, v.Rarity)
 	})
 	return s
 }
 
-func (i *UnitsInstance) FilterByName(c string) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) FilterByName(c string) *ItemsInstance {
+	s := NewItemsInstance()
 	for _, v := range i.values {
 		if v.Name == c {
 			s.Add(v)
@@ -180,8 +180,8 @@ func (i *UnitsInstance) FilterByName(c string) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) SortByName(isDesc bool) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) SortByName(isDesc bool) *ItemsInstance {
+	s := NewItemsInstance()
 	s.values = i.values
 	sort.SliceStable(s.values, func(i, j int) bool {
 		if isDesc {
@@ -192,16 +192,16 @@ func (i *UnitsInstance) SortByName(isDesc bool) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) Names() []string {
+func (i *ItemsInstance) Names() []string {
 	s := []string{}
-	i.Each(func(v *UnitInstance) {
+	i.Each(func(v *ItemInstance) {
 		s = append(s, v.Name)
 	})
 	return s
 }
 
-func (i *UnitsInstance) FilterByMaxCount(c uint16) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) FilterByMaxCount(c uint16) *ItemsInstance {
+	s := NewItemsInstance()
 	for _, v := range i.values {
 		if v.MaxCount == c {
 			s.Add(v)
@@ -210,8 +210,8 @@ func (i *UnitsInstance) FilterByMaxCount(c uint16) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) SortByMaxCount(isDesc bool) *UnitsInstance {
-	s := NewUnitsInstance()
+func (i *ItemsInstance) SortByMaxCount(isDesc bool) *ItemsInstance {
+	s := NewItemsInstance()
 	s.values = i.values
 	sort.SliceStable(s.values, func(i, j int) bool {
 		if isDesc {
@@ -222,9 +222,9 @@ func (i *UnitsInstance) SortByMaxCount(isDesc bool) *UnitsInstance {
 	return s
 }
 
-func (i *UnitsInstance) MaxCounts() []uint16 {
+func (i *ItemsInstance) MaxCounts() []uint16 {
 	s := []uint16{}
-	i.Each(func(v *UnitInstance) {
+	i.Each(func(v *ItemInstance) {
 		s = append(s, v.MaxCount)
 	})
 	return s

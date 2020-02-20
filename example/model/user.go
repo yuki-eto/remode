@@ -2,12 +2,12 @@
 package model
 
 import (
+	"example/dao"
+	"example/entity"
 	"sort"
 	"time"
 
 	"github.com/juju/errors"
-	"github.com/yuki-eto/remodel/example/dao"
-	"github.com/yuki-eto/remodel/example/entity"
 )
 
 type UserImpl struct {

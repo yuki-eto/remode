@@ -6,7 +6,7 @@ import (
 	"go.knocknote.io/rapidash"
 )
 
-type Unit struct {
+type Item struct {
 	ID       uint64 `csv:"Id"`
 	Type     string `csv:"Type"`
 	Rarity   string `csv:"Rarity"`
@@ -14,9 +14,9 @@ type Unit struct {
 	MaxCount uint16 `csv:"MaxCount"`
 }
 
-type Units []*Unit
+type Items []*Item
 
-func (e *Unit) DecodeRapidash(dec rapidash.Decoder) error {
+func (e *Item) DecodeRapidash(dec rapidash.Decoder) error {
 	e.ID = dec.Uint64("id")
 	e.Type = dec.String("type")
 	e.Rarity = dec.String("rarity")
@@ -25,11 +25,11 @@ func (e *Unit) DecodeRapidash(dec rapidash.Decoder) error {
 	return dec.Error()
 }
 
-func (e *Units) DecodeRapidash(dec rapidash.Decoder) error {
+func (e *Items) DecodeRapidash(dec rapidash.Decoder) error {
 	count := dec.Len()
-	*e = make([]*Unit, count)
+	*e = make([]*Item, count)
 	for i := 0; i < count; i++ {
-		var v Unit
+		var v Item
 		if err := v.DecodeRapidash(dec.At(i)); err != nil {
 			return errors.Trace(err)
 		}
@@ -38,8 +38,8 @@ func (e *Units) DecodeRapidash(dec rapidash.Decoder) error {
 	return nil
 }
 
-func (e *Unit) Struct() *rapidash.Struct {
-	s := rapidash.NewStruct("units")
+func (e *Item) Struct() *rapidash.Struct {
+	s := rapidash.NewStruct("items")
 	s.FieldUint64("id")
 	s.FieldString("type")
 	s.FieldString("rarity")

@@ -1,10 +1,10 @@
 package dao
 
 import (
+	"example/entity"
 	"time"
 
 	"github.com/juju/errors"
-	"github.com/yuki-eto/remodel/example/entity"
 	"go.knocknote.io/rapidash"
 )
 
