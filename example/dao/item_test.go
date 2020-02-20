@@ -5,16 +5,22 @@ import (
 	"strings"
 	"testing"
 
+	"go.knocknote.io/rapidash"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestItemImpl(t *testing.T) {
+	tx, err := getTxForTest(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fn := func(string) (*rapidash.Tx, error) {
+		return tx, nil
+	}
+
 	t.Run("find_all", func(t *testing.T) {
-		tx, err := getTxForTest(true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		d := NewItem(tx, 0)
+		d := NewItem(fn, 0)
 		items, err := d.FindsAll()
 		if err != nil {
 			t.Fatal(err)
@@ -29,11 +35,7 @@ func TestItemImpl(t *testing.T) {
 	})
 
 	t.Run("find_by_id", func(t *testing.T) {
-		tx, err := getTxForTest(true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		d := NewItem(tx, 0)
+		d := NewItem(fn, 0)
 		const id = uint64(1)
 		item, err := d.FindByID(id)
 		if err != nil {
@@ -45,11 +47,7 @@ func TestItemImpl(t *testing.T) {
 	})
 
 	t.Run("find_by_ids", func(t *testing.T) {
-		tx, err := getTxForTest(true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		d := NewItem(tx, 0)
+		d := NewItem(fn, 0)
 		ids := []uint64{1, 3, 5}
 		items, err := d.FindByIDs(ids)
 		if err != nil {
@@ -62,11 +60,7 @@ func TestItemImpl(t *testing.T) {
 	})
 
 	t.Run("find_by_type", func(t *testing.T) {
-		tx, err := getTxForTest(true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		d := NewItem(tx, 0)
+		d := NewItem(fn, 0)
 		const typ = "consumable"
 		items, err := d.FindByType(typ)
 		if err != nil {
@@ -80,11 +74,7 @@ func TestItemImpl(t *testing.T) {
 	})
 
 	t.Run("find_by_rarity", func(t *testing.T) {
-		tx, err := getTxForTest(true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		d := NewItem(tx, 0)
+		d := NewItem(fn, 0)
 		const rarity = "SR"
 		items, err := d.FindByRarity(rarity)
 		if err != nil {

@@ -1,9 +1,10 @@
 package remodel
 
 import (
-	"github.com/yuki-eto/remodel/assert"
 	"strings"
 	"testing"
+
+	"github.com/yuki-eto/remodel/assert"
 )
 
 func TestTable(t *testing.T) {

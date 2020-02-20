@@ -57,7 +57,7 @@ func openDBConnection(conf *DBConnectionConfig) (*DBConnection, error) {
 		return nil, errors.Trace(err)
 	}
 	return &DBConnection{
-		DB: conn,
+		DB:   conn,
 		conf: conf,
 	}, nil
 }

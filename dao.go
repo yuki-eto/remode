@@ -216,17 +216,19 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 	qb := qual(RapidashLib, "QueryBuilder")
 	structFields := []code{
 		i("tableName").String(),
-		i("tx").Add(ptr(qual(RapidashLib, "Tx"))),
+		i("txGetter").Func().Call().Params(ptr(qual(RapidashLib, "Tx")), jerr()),
 		i("qb").Func().Call().Params(ptr(qb)),
 	}
 	structMap := cmap{
 		i("tableName"): lit(d.TableName),
-		i("tx"):        i("tx"),
+		i("txGetter"): fn().Call().Params(ptr(qual(RapidashLib, "Tx")), jerr()).Block(
+			rtn(i("txGetter").Call(lit(d.TableName))),
+		),
 		i("qb"): fn().Call().Params(ptr(qb)).Block(
 			rtn(qual(RapidashLib, "NewQueryBuilder").Call(lit(d.TableName))),
 		),
 	}
-	if !d.IsReadOnly && (d.TableName == "users" || strings.HasPrefix(d.TableName, "user_")) {
+	if !d.IsReadOnly && strings.HasPrefix(d.TableName, "user_") {
 		structFields = append(structFields, i("uqb").Func().Call().Params(ptr(qb)))
 		structMap[i("uqb")] = fn().Call().Params(ptr(qb)).Block(
 			rtn(qual(RapidashLib, "NewQueryBuilder").Call(lit(d.TableName)).Dot("Eq").Call(lit("user_id"), i("userID"))),
@@ -238,20 +240,32 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 
 	// define methods
 	// instantiate
-	f.Func().Id("New"+d.Name).Params(i("tx").Add(ptr(qual(RapidashLib, "Tx"))), i("userID").Uint64()).Id(d.Name).Block(
+	txGetter := fn().Call(str()).Params(ptr(qual(RapidashLib, "Tx")), jerr())
+	params := []code{
+		i("txGetter").Add(txGetter),
+	}
+	if !d.IsReadOnly && strings.HasPrefix(d.TableName, "user_") {
+		params = append(params, i("userID").Uint64())
+	}
+	f.Func().Id("New" + d.Name).Params(params...).Id(d.Name).Block(
 		rtn(addr(i(structName)).Add(vals(structMap))),
 	).Line()
 
 	tableName := i("d").Dot("tableName")
 	instantiateEntity := i("e").Op(":=").Add(addrEntity).Values()
 	instantiateSlice := i("e").Op(":=").Add(addrSlice).Values()
+	txGetterCall := list(i("tx"), i("err")).Op(":=").Id("d").Dot("txGetter").Call()
+	checkErrAndReturnErr := ifErr().Block(returnErr)
+	checkErrAndReturnNilAndErr := ifErr().Block(returnNilAndErr)
 	queryBuilder := i("b").Op(":=").Id("d").Dot("qb").Call()
 	userQueryBuilder := i("b").Op(":=").Id("d").Dot("uqb").Call()
 	idQueryBuilder := queryBuilder.Clone().Dot("Eq").Call(lit("id"), i("e").Dot("ID"))
-	tx := i("d").Dot("tx")
+	tx := i("tx")
 	if d.IsReadOnly {
 		// FindsAll
 		f.Add(pfn("d", structName).Id("FindsAll").Params().Params(sliceAndError).Block(
+			txGetterCall,
+			checkErrAndReturnNilAndErr,
 			instantiateSlice,
 			ifxErr(tx.Clone().Dot("FindAllByTable").Call(tableName, i("e"))).Block(
 				returnNilAndErr,
@@ -268,6 +282,8 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 			m[lit(field.ColumnName)] = i("e").Dot(field.Name)
 		}
 		f.Add(pfn("d", structName).Id("Save").Params(entityParam).Error().Block(
+			txGetterCall,
+			checkErrAndReturnErr,
 			i("now").Op(":=").Qual("time", "Now").Call(),
 			i("e").Dot("UpdatedAt").Op("=").Add(addr(i("now"))),
 			ifa(i("e").Dot("ID"), "==", lit(0)).Block(
@@ -287,11 +303,13 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 
 		// Delete
 		f.Add(pfn("d", structName).Id("Delete").Params(entityParam).Error().Block(
+			txGetterCall,
+			checkErrAndReturnErr,
 			ifa(i("e").Dot("ID"), "==", lit(0)).Block(
 				rtn(qual(ErrorsLib, "New").Call(lit("cannot delete without identifier"))),
 			),
 			idQueryBuilder,
-			ifxErr(i("d").Dot("tx").Dot("DeleteByQueryBuilder").Call(i("b"))).Block(
+			ifxErr(tx.Clone().Dot("DeleteByQueryBuilder").Call(i("b"))).Block(
 				returnErr,
 			),
 			returnNil,
@@ -300,7 +318,10 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 
 	// findMethods
 	for _, m := range findMethods {
-		var codes []code
+		codes := []code{
+			txGetterCall,
+			checkErrAndReturnNilAndErr,
+		}
 		q := queryBuilder.Clone()
 		if m.FindColumns[0] == "user_id" {
 			q = userQueryBuilder.Clone()

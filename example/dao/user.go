@@ -21,30 +21,32 @@ type User interface {
 
 type UserImpl struct {
 	tableName string
-	tx        *rapidash.Tx
+	txGetter  func() (*rapidash.Tx, error)
 	qb        func() *rapidash.QueryBuilder
-	uqb       func() *rapidash.QueryBuilder
 }
 
-func NewUser(tx *rapidash.Tx, userID uint64) User {
+func NewUser(txGetter func(string) (*rapidash.Tx, error)) User {
 	return &UserImpl{
 		qb: func() *rapidash.QueryBuilder {
 			return rapidash.NewQueryBuilder("users")
 		},
 		tableName: "users",
-		tx:        tx,
-		uqb: func() *rapidash.QueryBuilder {
-			return rapidash.NewQueryBuilder("users").Eq("user_id", userID)
+		txGetter: func() (*rapidash.Tx, error) {
+			return txGetter("users")
 		},
 	}
 }
 
 func (d *UserImpl) Save(e *entity.User) error {
+	tx, err := d.txGetter()
+	if err != nil {
+		return errors.Trace(err)
+	}
 	now := time.Now()
 	e.UpdatedAt = &now
 	if e.ID == 0 {
 		e.CreatedAt = &now
-		id, err := d.tx.CreateByTable(d.tableName, e)
+		id, err := tx.CreateByTable(d.tableName, e)
 		if err != nil {
 			return errors.Trace(err)
 		}
@@ -59,27 +61,35 @@ func (d *UserImpl) Save(e *entity.User) error {
 		"updated_at":      e.UpdatedAt,
 		"uuid":            e.Uuid,
 	}
-	if err := d.tx.UpdateByQueryBuilder(b, m); err != nil {
+	if err := tx.UpdateByQueryBuilder(b, m); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
 }
 
 func (d *UserImpl) Delete(e *entity.User) error {
+	tx, err := d.txGetter()
+	if err != nil {
+		return errors.Trace(err)
+	}
 	if e.ID == 0 {
 		return errors.New("cannot delete without identifier")
 	}
 	b := d.qb().Eq("id", e.ID)
-	if err := d.tx.DeleteByQueryBuilder(b); err != nil {
+	if err := tx.DeleteByQueryBuilder(b); err != nil {
 		return errors.Trace(err)
 	}
 	return nil
 }
 
 func (d *UserImpl) FindByID(k0 uint64) (*entity.User, error) {
+	tx, err := d.txGetter()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	b := d.qb().Eq("id", k0)
 	e := &entity.User{}
-	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
+	if err := tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	if e.ID == 0 {
@@ -89,18 +99,26 @@ func (d *UserImpl) FindByID(k0 uint64) (*entity.User, error) {
 }
 
 func (d *UserImpl) FindByIDs(k0 []uint64) (entity.Users, error) {
+	tx, err := d.txGetter()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	b := d.qb().In("id", k0)
 	e := &entity.Users{}
-	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
+	if err := tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	return *e, nil
 }
 
 func (d *UserImpl) FindByUuid(k0 string) (*entity.User, error) {
+	tx, err := d.txGetter()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	b := d.qb().Eq("uuid", k0)
 	e := &entity.User{}
-	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
+	if err := tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	if e.ID == 0 {
@@ -110,18 +128,26 @@ func (d *UserImpl) FindByUuid(k0 string) (*entity.User, error) {
 }
 
 func (d *UserImpl) FindByUuids(k0 []string) (entity.Users, error) {
+	tx, err := d.txGetter()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	b := d.qb().In("uuid", k0)
 	e := &entity.Users{}
-	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
+	if err := tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	return *e, nil
 }
 
 func (d *UserImpl) FindByOutsideUserID(k0 string) (*entity.User, error) {
+	tx, err := d.txGetter()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	b := d.qb().Eq("outside_user_id", k0)
 	e := &entity.User{}
-	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
+	if err := tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	if e.ID == 0 {
@@ -131,9 +157,13 @@ func (d *UserImpl) FindByOutsideUserID(k0 string) (*entity.User, error) {
 }
 
 func (d *UserImpl) FindByOutsideUserIDs(k0 []string) (entity.Users, error) {
+	tx, err := d.txGetter()
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
 	b := d.qb().In("outside_user_id", k0)
 	e := &entity.Users{}
-	if err := d.tx.FindByQueryBuilder(b, e); err != nil {
+	if err := tx.FindByQueryBuilder(b, e); err != nil {
 		return nil, errors.Trace(err)
 	}
 	return *e, nil
