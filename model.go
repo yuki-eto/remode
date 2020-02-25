@@ -177,6 +177,11 @@ func (m *Model) GenerateCode(writer io.Writer, moduleName string) error {
 		rtn(idot("i", "values").Index(i("idx"))),
 	)).Line()
 
+	// Len
+	f.Add(pfn("i", sliceInstanceName).Id("Len").Params().Params(i("int")).Block(
+		rtn().Len(i("i").Dot("values")),
+	)).Line()
+
 	for _, c := range m.Columns {
 		var columnType code
 		if c.EntityType == TimePtr {

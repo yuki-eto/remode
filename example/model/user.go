@@ -100,6 +100,10 @@ func (i *UsersInstance) At(idx int) *UserInstance {
 	return i.values[idx]
 }
 
+func (i *UsersInstance) Len() int {
+	return len(i.values)
+}
+
 func (i *UsersInstance) FilterByID(c uint64) *UsersInstance {
 	s := NewUsersInstance()
 	for _, v := range i.values {

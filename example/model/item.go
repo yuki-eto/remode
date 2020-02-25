@@ -80,6 +80,10 @@ func (i *ItemsInstance) At(idx int) *ItemInstance {
 	return i.values[idx]
 }
 
+func (i *ItemsInstance) Len() int {
+	return len(i.values)
+}
+
 func (i *ItemsInstance) FilterByID(c uint64) *ItemsInstance {
 	s := NewItemsInstance()
 	for _, v := range i.values {
