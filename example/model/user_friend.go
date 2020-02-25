@@ -104,6 +104,10 @@ func (i *UserFriendsInstance) Len() int {
 	return len(i.values)
 }
 
+func (i *UserFriendsInstance) IsEmpty() bool {
+	return i.Len() == 0
+}
+
 func (i *UserFriendsInstance) FilterByID(c uint64) *UserFriendsInstance {
 	s := NewUserFriendsInstance()
 	for _, v := range i.values {

@@ -84,6 +84,10 @@ func (i *ItemsInstance) Len() int {
 	return len(i.values)
 }
 
+func (i *ItemsInstance) IsEmpty() bool {
+	return i.Len() == 0
+}
+
 func (i *ItemsInstance) FilterByID(c uint64) *ItemsInstance {
 	s := NewItemsInstance()
 	for _, v := range i.values {

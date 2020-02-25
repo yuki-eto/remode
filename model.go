@@ -182,6 +182,11 @@ func (m *Model) GenerateCode(writer io.Writer, moduleName string) error {
 		rtn().Len(i("i").Dot("values")),
 	)).Line()
 
+	// IsEmpty
+	f.Add(pfn("i", sliceInstanceName).Id("IsEmpty").Params().Params(i("bool")).Block(
+		rtn(i("i").Dot("Len").Call().Op("==").Lit(0)),
+	)).Line()
+
 	for _, c := range m.Columns {
 		var columnType code
 		if c.EntityType == TimePtr {
