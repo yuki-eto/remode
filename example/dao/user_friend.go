@@ -19,10 +19,11 @@ type UserFriend interface {
 }
 
 type UserFriendImpl struct {
-	tableName string
-	txGetter  func() (*rapidash.Tx, error)
-	qb        func() *rapidash.QueryBuilder
-	uqb       func() *rapidash.QueryBuilder
+	tableName    string
+	txGetter     func() (*rapidash.Tx, error)
+	qb           func() *rapidash.QueryBuilder
+	userIDGetter func() uint64
+	uqb          func() *rapidash.QueryBuilder
 }
 
 func NewUserFriend(txGetter func(string) (*rapidash.Tx, error), userIDGetter func() uint64) UserFriend {
@@ -37,6 +38,7 @@ func NewUserFriend(txGetter func(string) (*rapidash.Tx, error), userIDGetter fun
 		uqb: func() *rapidash.QueryBuilder {
 			return rapidash.NewQueryBuilder("user_friends").Eq("user_id", userIDGetter())
 		},
+		userIDGetter: userIDGetter,
 	}
 }
 
@@ -48,6 +50,7 @@ func (d *UserFriendImpl) Save(e *entity.UserFriend) error {
 	now := time.Now()
 	e.UpdatedAt = &now
 	if e.ID == 0 {
+		e.UserID = d.userIDGetter()
 		e.CreatedAt = &now
 		id, err := tx.CreateByTable(d.tableName, e)
 		if err != nil {

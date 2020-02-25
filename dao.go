@@ -228,8 +228,14 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 			rtn(qual(RapidashLib, "NewQueryBuilder").Call(lit(d.TableName))),
 		),
 	}
-	if !d.IsReadOnly && strings.HasPrefix(d.TableName, "user_") {
-		structFields = append(structFields, i("uqb").Func().Call().Params(ptr(qb)))
+	isUserTable := !d.IsReadOnly && strings.HasPrefix(d.TableName, "user_")
+	if isUserTable {
+		structFields = append(
+			structFields,
+			i("userIDGetter").Func().Call().Params(i("uint64")),
+			i("uqb").Func().Call().Params(ptr(qb)),
+		)
+		structMap[i("userIDGetter")] = i("userIDGetter")
 		structMap[i("uqb")] = fn().Call().Params(ptr(qb)).Block(
 			rtn(qual(RapidashLib, "NewQueryBuilder").Call(lit(d.TableName)).Dot("Eq").Call(lit("user_id"), i("userIDGetter").Call())),
 		)
@@ -244,7 +250,7 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 	params := []code{
 		i("txGetter").Add(txGetter),
 	}
-	if !d.IsReadOnly && strings.HasPrefix(d.TableName, "user_") {
+	if isUserTable {
 		params = append(params, i("userIDGetter").Func().Call().Params(i("uint64")))
 	}
 	f.Func().Id("New" + d.Name).Params(params...).Id(d.Name).Block(
@@ -275,6 +281,10 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 	} else {
 		// Save
 		m := cmap{}
+		var userIDSetter code
+		if isUserTable {
+			userIDSetter = i("e").Dot("UserID").Op("=").Id("d").Dot("userIDGetter").Call()
+		}
 		for _, field := range d.Fields {
 			if field.ColumnName == "id" || field.ColumnName == "created_at" || field.ColumnName == "user_id" {
 				continue
@@ -287,6 +297,7 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 			i("now").Op(":=").Qual("time", "Now").Call(),
 			i("e").Dot("UpdatedAt").Op("=").Add(addr(i("now"))),
 			ifa(i("e").Dot("ID"), "==", lit(0)).Block(
+				userIDSetter,
 				i("e").Dot("CreatedAt").Op("=").Add(addr(i("now"))),
 				list(i("id"), i("err")).Op(":=").Add(tx.Clone().Dot("CreateByTable").Call(tableName, i("e"))),
 				ifErr().Block(returnErr),
