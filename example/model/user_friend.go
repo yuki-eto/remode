@@ -257,3 +257,9 @@ func (i *UserFriendsInstance) UpdatedAts() []*time.Time {
 	})
 	return s
 }
+
+func (i *UserFriendsInstance) Save() error {
+	return i.EachWithError(func(i *UserFriendInstance) error {
+		return errors.Trace(i.Save())
+	})
+}

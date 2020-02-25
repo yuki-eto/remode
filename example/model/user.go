@@ -317,3 +317,9 @@ func (i *UsersInstance) UpdatedAts() []*time.Time {
 	})
 	return s
 }
+
+func (i *UsersInstance) Save() error {
+	return i.EachWithError(func(i *UserInstance) error {
+		return errors.Trace(i.Save())
+	})
+}
