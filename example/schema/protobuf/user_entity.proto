@@ -1,0 +1,11 @@
+syntax = "proto3";
+package pb;
+
+message UserEntity {
+  string uuid = 1;
+  string access_token = 2;
+  string outside_user_id = 3;
+  string name = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+}

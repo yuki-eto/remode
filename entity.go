@@ -1,6 +1,7 @@
 package remodel
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
@@ -129,6 +130,28 @@ func (f *Field) typeToCode() code {
 	return i(string(f.FieldType))
 }
 
+func (f *Field) toProtoBufType() string {
+	switch f.FieldType {
+	case String, Int32, Int64, Uint32, Uint64, Bool:
+		return string(f.FieldType)
+	case Uint16, Uint8:
+		return "uint32"
+	case Int16, Int8:
+		return "int32"
+	case Float64:
+		return "double"
+	case Float32:
+		return "float"
+	case TimePtr:
+		return "int64"
+	case ByteSlice:
+		return "bytes"
+	case StringSlice:
+		return "repeated string"
+	}
+	return ""
+}
+
 func (e *Entity) fieldToCode(f *Field) code {
 	jf := i(f.Name).Add(f.typeToCode())
 	tags := map[string]string{}
@@ -151,7 +174,7 @@ func (e *Entity) fieldToGetMethodCode(f *Field) code {
 
 type Entities []*Entity
 
-func (e *Entities) GenerateStructableCode(writer io.Writer, moduleName string) error {
+func (e *Entities) GenerateStructableCode(writer io.Writer) error {
 	f := newFile("entity")
 
 	f.ImportName(RapidashLib, "rapidash")
@@ -178,4 +201,32 @@ func (e *Entities) GenerateStructableCode(writer io.Writer, moduleName string) e
 	)
 
 	return errors.Trace(f.Render(writer))
+}
+
+func (e *Entity) GenerateProtocolBuffers(writer io.Writer) error {
+	lines := []string{
+		`syntax = "proto3";`,
+		"package pb;",
+		"",
+	}
+
+	lines = append(lines, fmt.Sprintf("message %s {", e.Name+"Entity"))
+
+	i := 1
+	for _, f := range e.Fields {
+		if (e.TableName == "users" && f.Name == "ID") || f.Name == "UserID" {
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("  %s %s = %d;", f.toProtoBufType(), f.ColumnName, i))
+		i++
+	}
+
+	lines = append(lines, "}")
+
+	for _, l := range lines {
+		if _, err := fmt.Fprintln(writer, l); err != nil {
+			return errors.Trace(err)
+		}
+	}
+	return nil
 }
