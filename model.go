@@ -240,11 +240,13 @@ func (m *Model) GenerateCode(writer io.Writer, moduleName string) error {
 		)).Line()
 	}
 
-	f.Add(pfn("i", sliceInstanceName).Id("Save").Params().Params(jerr()).Block(
-		rtn(i("i").Dot("EachWithError").Call(fn().Params(i("i").Add(ptr(i(instanceName)))).Params(jerr()).Block(
-			rtn(traceErr(i("i").Dot("Save").Call())),
-		))),
-	)).Line()
+	if !m.IsReadOnly {
+		f.Add(pfn("i", sliceInstanceName).Id("Save").Params().Params(jerr()).Block(
+			rtn(i("i").Dot("EachWithError").Call(fn().Params(i("i").Add(ptr(i(instanceName)))).Params(jerr()).Block(
+				rtn(traceErr(i("i").Dot("Save").Call())),
+			))),
+		)).Line()
+	}
 
 	return errors.Trace(f.Render(writer))
 }

@@ -237,9 +237,3 @@ func (i *ItemsInstance) MaxCounts() []uint16 {
 	})
 	return s
 }
-
-func (i *ItemsInstance) Save() error {
-	return i.EachWithError(func(i *ItemInstance) error {
-		return errors.Trace(i.Save())
-	})
-}
