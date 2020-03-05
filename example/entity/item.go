@@ -2,6 +2,8 @@
 package entity
 
 import (
+	"json"
+
 	"github.com/juju/errors"
 	"go.knocknote.io/rapidash"
 )
@@ -46,4 +48,16 @@ func (e *Item) Struct() *rapidash.Struct {
 	s.FieldString("name")
 	s.FieldUint16("max_count")
 	return s
+}
+
+func (e *Item) MarshalJSON() ([]byte, error) {
+	m := map[string]interface{}{
+		"id":       e.ID,
+		"maxCount": e.MaxCount,
+		"name":     e.Name,
+		"rarity":   e.Rarity,
+		"type":     e.Type,
+	}
+	b, err := json.Marshal(m)
+	return b, errors.Trace(err)
 }

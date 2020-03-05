@@ -49,10 +49,13 @@ func (e *Entity) FromTable(t *Table) {
 	}
 }
 
-func (e *Entity) GenerateCode(writer io.Writer) error {
+func (e *Entity) GenerateCode(writer io.Writer, isJSON bool) error {
 	f := newFile("entity")
 	f.ImportName(ErrorsLib, "errors")
 	f.ImportName(RapidashLib, "rapidash")
+	if isJSON {
+		f.ImportName("json", "json")
+	}
 
 	var fields []code
 	for _, field := range e.Fields {
@@ -120,6 +123,41 @@ func (e *Entity) GenerateCode(writer io.Writer) error {
 	)).Line()
 	f.Add(pfn("e", e.Name).Id("Struct").Params().Params(ptr().Add(qual(RapidashLib, "Struct"))).Block(structCodes...)).Line()
 
+	if !isJSON {
+		return errors.Trace(f.Render(writer))
+	}
+
+	// MarshalJSON
+	values := cmap{}
+	var timePtrsCodes []code
+	for _, f := range e.Fields {
+		if strings.HasSuffix(f.ColumnName, "user_id") {
+			continue
+		}
+		if e.TableName == "users" && f.ColumnName == "id" {
+			continue
+		}
+		if f.FieldType == TimePtr {
+			timePtrsCodes = append(timePtrsCodes, ifa(i("e").Dot(f.Name), "!=", null()).Block(
+				i("m").Index(lit(f.LowerCamelName())).Op("=").Id("e").Dot(f.Name).Dot("Unix").Call(),
+			))
+			continue
+		}
+		key := lit(f.LowerCamelName())
+		value := i("e").Dot(f.Name)
+		values[key] = value
+	}
+	codes := []code{
+		i("m").Op(":=").Map(i("string")).Interface().Add(vals(values)),
+	}
+	if timePtrsCodes != nil {
+		codes = append(codes, timePtrsCodes...)
+	}
+	codes = append(codes, list(i("b"), i("err")).Op(":=").Qual("json", "Marshal").Call(i("m")))
+	codes = append(codes, rtn(i("b"), traceErr()))
+
+	f.Add(pfn("e", e.Name).Id("MarshalJSON").Params().Params(idx().Byte(), jerr()).Block(codes...)).Line()
+
 	return errors.Trace(f.Render(writer))
 }
 
@@ -152,6 +190,10 @@ func (f *Field) toProtoBufType() string {
 	return ""
 }
 
+func (f *Field) LowerCamelName() string {
+	return strcase.ToLowerCamel(f.ColumnName)
+}
+
 func (e *Entity) fieldToCode(f *Field) code {
 	jf := i(f.Name).Add(f.typeToCode())
 	tags := map[string]string{}
@@ -163,12 +205,12 @@ func (e *Entity) fieldToCode(f *Field) code {
 }
 
 func (e *Entity) fieldToROCode(f *Field) code {
-	return i(strcase.ToLowerCamel(f.ColumnName)).Add(f.typeToCode())
+	return i(f.LowerCamelName()).Add(f.typeToCode())
 }
 
 func (e *Entity) fieldToGetMethodCode(f *Field) code {
 	return fn().Params(i("e").Add(i(e.Name))).Id(f.Name).Params().Params(f.typeToCode()).Block(
-		rtn(i("e").Dot(strcase.ToLowerCamel(f.ColumnName))),
+		rtn(i("e").Dot(f.LowerCamelName())),
 	)
 }
 

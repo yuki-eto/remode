@@ -2,6 +2,7 @@
 package entity
 
 import (
+	"json"
 	"time"
 
 	"github.com/juju/errors"
@@ -69,4 +70,16 @@ func (e *UserFriend) Struct() *rapidash.Struct {
 	s.FieldTime("created_at")
 	s.FieldTime("updated_at")
 	return s
+}
+
+func (e *UserFriend) MarshalJSON() ([]byte, error) {
+	m := map[string]interface{}{"id": e.ID}
+	if e.CreatedAt != nil {
+		m["createdAt"] = e.CreatedAt.Unix()
+	}
+	if e.UpdatedAt != nil {
+		m["updatedAt"] = e.UpdatedAt.Unix()
+	}
+	b, err := json.Marshal(m)
+	return b, errors.Trace(err)
 }
