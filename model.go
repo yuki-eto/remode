@@ -20,6 +20,9 @@ type Model struct {
 	Columns    []*ModelColumn
 	IsReadOnly bool
 	IDType     string
+	HasTime    bool
+	HasBytes   bool
+	HasStrings bool
 }
 
 type Models []*Model
@@ -85,6 +88,13 @@ func (m *Model) fromTable(t *Table) {
 		if c.Name == "id" {
 			m.IDType = string(c.EntityType)
 		}
+		if c.EntityType == ByteSlice {
+			m.HasBytes = true
+		} else if c.EntityType == StringSlice {
+			m.HasStrings = true
+		} else if c.EntityType == TimePtr {
+			m.HasTime = true
+		}
 		m.Columns = append(m.Columns, col)
 	}
 }
@@ -98,6 +108,16 @@ func (m *Model) generateCode(writer io.Writer, moduleName string) error {
 	f.ImportName(daoPackage, DaoPackageName)
 	f.ImportName(LogLib, "log")
 	f.ImportName(ErrorsLib, "errors")
+	f.ImportName("sort", "sort")
+	if m.HasTime {
+		f.ImportName("time", "time")
+	}
+	if m.HasBytes {
+		f.ImportName("bytes", "bytes")
+	}
+	if m.HasStrings {
+		f.ImportName("strings", "strings")
+	}
 	idType := i(m.IDType)
 	idParam := i("id").Add(idType)
 	singleEntity := qual(entityPackage, m.Name)
@@ -233,15 +253,35 @@ func (m *Model) generateCode(writer io.Writer, moduleName string) error {
 		valueField := idot("v", c.CamelName)
 
 		// FilterByColumn
+		filterCodes := []code{
+			i("s").Op(":=").Id("New" + sliceInstanceName).Call(),
+		}
+		if c.EntityType == StringSlice {
+			filterCodes = append(filterCodes, qual("sort", "Strings").Call(i("c")))
+			filterCodes = append(filterCodes, i("cs").Op(":=").Qual("strings", "Join").Call(i("c"), lit(",")))
+		}
+		forBlock := ifa(valueField, "==", i("c")).Block(
+			idot("s", "Add").Call(i("v")),
+		)
+		if c.EntityType == TimePtr {
+			forBlock = ifb(i("v").Dot(c.CamelName).Dot("Equal").Call(ptr(i("c")))).Block(
+				idot("s", "Add").Call(i("v")),
+			)
+		} else if c.EntityType == ByteSlice {
+			forBlock = ifb(qual("bytes", "Equal").Call(i("v").Dot(c.CamelName), i("c"))).Block(
+				idot("s", "Add").Call(i("v")),
+			)
+		} else if c.EntityType == StringSlice {
+			forBlock = i("vs").Op(":=").Id("v").Dot(c.CamelName).Line()
+			forBlock.Qual("sort", "Strings").Call(i("vs")).Line()
+			forBlock.Add(ifa(qual("strings", "Join").Call(i("vs"), lit(",")), "==", i("cs")).Block(
+				idot("s", "Add").Call(i("v")),
+			))
+		}
+		filterCodes = append(filterCodes, forEachV("v", idot("i", "values")).Block(forBlock), rtn(i("s")))
 		name := "FilterBy" + c.CamelName
 		f.Add(pfn("i", sliceInstanceName).Id(name).Params(i("c").Add(columnType)).Params(sliceInstancePointer).Block(
-			i("s").Op(":=").Id("New"+sliceInstanceName).Call(),
-			forEachV("v", idot("i", "values")).Block(
-				ifa(valueField, "==", i("c")).Block(
-					idot("s", "Add").Call(i("v")),
-				),
-			),
-			rtn(i("s")),
+			filterCodes...,
 		)).Line()
 
 		// SortByColumn
@@ -249,12 +289,21 @@ func (m *Model) generateCode(writer io.Writer, moduleName string) error {
 		valueJ := i("s").Dot("values").Index(i("j")).Dot(c.CamelName)
 		descCompare := valueI.Clone().Op(">").Add(valueJ)
 		ascCompare := valueI.Clone().Op("<").Add(valueJ)
-		if c.EntityType == TimePtr {
+		switch c.EntityType {
+		case TimePtr:
 			descCompare = valueI.Clone().Dot("Before").Call(ptr(valueJ))
 			ascCompare = valueI.Clone().Dot("After").Call(ptr(valueJ))
-		} else if c.EntityType == Bool {
+		case Bool:
 			descCompare = valueJ
 			ascCompare = valueI
+		case ByteSlice:
+			descCompare = qual("bytes", "Compare").Call(valueI, valueJ).Op(">").Lit(0)
+			ascCompare = qual("bytes", "Compare").Call(valueI, valueJ).Op("<").Lit(0)
+		case StringSlice:
+			joinI := qual("strings", "Join").Call(valueI, lit(","))
+			joinJ := qual("strings", "Join").Call(valueJ, lit(","))
+			descCompare = joinI.Clone().Op("<").Add(joinJ)
+			ascCompare = joinI.Clone().Op(">").Add(joinJ)
 		}
 		f.Add(pfn("i", sliceInstanceName).Id("SortBy"+c.CamelName).Params(i("isDesc").Id("bool")).Params(sliceInstancePointer).Block(
 			i("s").Op(":=").Id("New"+sliceInstanceName).Call(),

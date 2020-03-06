@@ -284,7 +284,7 @@ func (c *Column) entityType() EntityType {
 		return Int8
 	case Float:
 		return Float32
-	case Double:
+	case Double, Decimal, Numeric:
 		return Float64
 	case Bit:
 		if c.Size > 32 {
@@ -295,11 +295,9 @@ func (c *Column) entityType() EntityType {
 			return Uint16
 		}
 		return Uint8
-	case Date, Datetime, Timestamp:
+	case Date, Datetime, Timestamp, Time, Year:
 		return TimePtr
-	case Varchar, Text, Enum:
-		return String
-	case Blob:
+	case LongBlob, MediumBlob, TinyBlob, Blob, Binary, VarBinary:
 		return ByteSlice
 	case Set:
 		return StringSlice

@@ -147,8 +147,9 @@ func (e *Entity) generateCode(writer io.Writer, isJSON bool) error {
 	f := newFile("entity")
 	f.ImportName(ErrorsLib, "errors")
 	f.ImportName(RapidashLib, "rapidash")
+	const jsonPackage = "encoding/json"
 	if isJSON {
-		f.ImportName("json", "json")
+		f.ImportName(jsonPackage, "json")
 	}
 
 	var fields []code
@@ -178,12 +179,22 @@ func (e *Entity) generateCode(writer io.Writer, isJSON bool) error {
 		if field.FieldType == TimePtr {
 			fieldType = "TimePtr"
 			structType = "Time"
+		} else if field.FieldType == ByteSlice {
+			fieldType = "Bytes"
+			structType = "Bytes"
+		} else if field.FieldType == StringSlice {
+			fieldType = "Strings"
+			structType = "Strings"
+		}
+		structCode := i("s").Dot("Field" + structType).Call(lit(field.ColumnName))
+		if structType == "Strings" {
+			structCode = i("s").Dot("FieldSlice").Call(lit(field.ColumnName), qual(RapidashLib, "StringType"))
 		}
 		decodeCode.Id("dec").Dot(fieldType).Call(lit(field.ColumnName))
 		encodeCode := i("enc").Dot(fieldType).Call(lit(field.ColumnName), i("e").Dot(field.Name))
 		encodeCodes = append(encodeCodes, encodeCode)
 		decodeCodes = append(decodeCodes, decodeCode)
-		structCodes = append(structCodes, i("s").Dot("Field"+structType).Call(lit(field.ColumnName)))
+		structCodes = append(structCodes, structCode)
 	}
 	encodeCodes = append(encodeCodes, rtn(i("enc").Dot("Error").Call()))
 	decodeCodes = append(decodeCodes, rtn(i("dec").Dot("Error").Call()))
@@ -247,7 +258,7 @@ func (e *Entity) generateCode(writer io.Writer, isJSON bool) error {
 	if timePtrsCodes != nil {
 		codes = append(codes, timePtrsCodes...)
 	}
-	codes = append(codes, list(i("b"), i("err")).Op(":=").Qual("json", "Marshal").Call(i("m")))
+	codes = append(codes, list(i("b"), i("err")).Op(":=").Qual(jsonPackage, "Marshal").Call(i("m")))
 	codes = append(codes, rtn(i("b"), traceErr()))
 
 	f.Add(pfn("e", e.Name).Id("MarshalJSON").Params().Params(idx().Byte(), jerr()).Block(codes...)).Line()

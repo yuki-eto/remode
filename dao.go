@@ -20,6 +20,7 @@ type Dao struct {
 	Indexes    []*DaoIndex
 	Fields     []*DaoField
 	IsReadOnly bool
+	HasTime    bool
 }
 
 type Daos []*Dao
@@ -148,6 +149,9 @@ func (d *Dao) fromTable(t *Table) {
 			fieldName = fieldName[:l-2] + "ID"
 		}
 		field.Name = fieldName
+		if c.EntityType == TimePtr {
+			d.HasTime = true
+		}
 		d.Fields = append(d.Fields, field)
 	}
 
@@ -179,6 +183,9 @@ func (d *Dao) generateCode(writer io.Writer, moduleName string) error {
 	f.ImportName(RapidashLib, "rapidash")
 	f.ImportName(LogLib, "log")
 	f.ImportName(ErrorsLib, "errors")
+	if d.HasTime {
+		f.ImportName("time", "time")
+	}
 
 	singleEntity := qual(entityPackage, d.Name)
 	ptrEntity := ptr(singleEntity)
