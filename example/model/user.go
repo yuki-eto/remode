@@ -261,7 +261,7 @@ func (i *UsersInstance) Names() []string {
 func (i *UsersInstance) FilterByCreatedAt(c *time.Time) *UsersInstance {
 	s := NewUsersInstance()
 	for _, v := range i.values {
-		if v.CreatedAt == c {
+		if v.CreatedAt.Equal(*c) {
 			s.Add(v)
 		}
 	}
@@ -291,7 +291,7 @@ func (i *UsersInstance) CreatedAts() []*time.Time {
 func (i *UsersInstance) FilterByUpdatedAt(c *time.Time) *UsersInstance {
 	s := NewUsersInstance()
 	for _, v := range i.values {
-		if v.UpdatedAt == c {
+		if v.UpdatedAt.Equal(*c) {
 			s.Add(v)
 		}
 	}

@@ -201,7 +201,7 @@ func (i *UserFriendsInstance) OtherUserIDs() []uint64 {
 func (i *UserFriendsInstance) FilterByCreatedAt(c *time.Time) *UserFriendsInstance {
 	s := NewUserFriendsInstance()
 	for _, v := range i.values {
-		if v.CreatedAt == c {
+		if v.CreatedAt.Equal(*c) {
 			s.Add(v)
 		}
 	}
@@ -231,7 +231,7 @@ func (i *UserFriendsInstance) CreatedAts() []*time.Time {
 func (i *UserFriendsInstance) FilterByUpdatedAt(c *time.Time) *UserFriendsInstance {
 	s := NewUserFriendsInstance()
 	for _, v := range i.values {
-		if v.UpdatedAt == c {
+		if v.UpdatedAt.Equal(*c) {
 			s.Add(v)
 		}
 	}

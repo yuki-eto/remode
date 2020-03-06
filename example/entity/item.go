@@ -2,7 +2,7 @@
 package entity
 
 import (
-	"json"
+	"encoding/json"
 
 	"github.com/juju/errors"
 	"go.knocknote.io/rapidash"

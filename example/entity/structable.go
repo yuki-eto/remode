@@ -9,6 +9,7 @@ type Structable interface {
 
 func Structables() map[string]Structable {
 	return map[string]Structable{
+		"user_bytes":   new(UserByte),
 		"user_friends": new(UserFriend),
 		"users":        new(User),
 	}

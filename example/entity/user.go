@@ -2,7 +2,7 @@
 package entity
 
 import (
-	"json"
+	"encoding/json"
 	"time"
 
 	"github.com/juju/errors"
