@@ -3,6 +3,9 @@ package remodel
 import (
 	"fmt"
 	"io"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gertd/go-pluralize"
@@ -19,6 +22,8 @@ type Dao struct {
 	IsReadOnly bool
 }
 
+type Daos []*Dao
+
 type DaoIndex struct {
 	*Index
 	Columns []*Column
@@ -33,7 +38,33 @@ type DaoFindMethod struct {
 	FindColumns []string
 }
 
-func (d *DaoIndex) FindMethods(moduleName, entityName, sliceName string, p *pluralize.Client) []*DaoFindMethod {
+func (s *Daos) Output(rootPath, moduleName string) error {
+	for _, d := range *s {
+		daoPath, err := filepath.Abs(filepath.Join(rootPath, "dao", fmt.Sprintf("%s.go", strcase.ToSnake(d.Name))))
+		if err != nil {
+			return errors.Trace(err)
+		}
+		out, err := os.Create(daoPath)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		if err := d.generateCode(out, moduleName); err != nil {
+			return errors.Trace(err)
+		}
+		if err := out.Close(); err != nil {
+			return errors.Trace(err)
+		}
+		if err := applyGoimports(daoPath); err != nil {
+			return errors.Trace(err)
+		}
+
+		log.Printf("output: %s", daoPath)
+	}
+
+	return nil
+}
+
+func (d *DaoIndex) findMethods(moduleName, entityName, sliceName string, p *pluralize.Client) []*DaoFindMethod {
 	var methods []*DaoFindMethod
 
 	var (
@@ -104,7 +135,7 @@ type DaoField struct {
 	ColumnName string
 }
 
-func (d *Dao) FromTable(t *Table) {
+func (d *Dao) fromTable(t *Table) {
 	columnMap := map[string]*Column{}
 	for _, c := range t.Columns {
 		columnMap[c.Name] = c
@@ -139,7 +170,7 @@ func (d *Dao) FromTable(t *Table) {
 	}
 }
 
-func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
+func (d *Dao) generateCode(writer io.Writer, moduleName string) error {
 	p := pluralize.NewClient()
 	f := newFile("dao")
 
@@ -197,7 +228,7 @@ func (d *Dao) GenerateCode(writer io.Writer, moduleName string) error {
 	}
 	findMethodNames := map[string]struct{}{}
 	for _, index := range d.Indexes {
-		mds := index.FindMethods(moduleName, d.Name, d.SliceName, p)
+		mds := index.findMethods(moduleName, d.Name, d.SliceName, p)
 		for _, m := range mds {
 			if _, exists := findMethodNames[m.Name]; exists {
 				continue

@@ -1,12 +1,18 @@
 package remodel
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/gertd/go-pluralize"
 	"github.com/juju/errors"
 	"github.com/xwb1989/sqlparser"
+	"gopkg.in/yaml.v2"
 )
 
 type ColumnType string
@@ -17,6 +23,8 @@ type Table struct {
 	Indexes    []*Index  `yaml:"indexes"`
 	IsReadOnly bool      `yaml:"is_read_only"`
 }
+
+type Tables []*Table
 
 type Column struct {
 	Name            string     `yaml:"name"`
@@ -39,7 +47,119 @@ type Index struct {
 	Columns      []string `yaml:"columns"`
 }
 
-func (t *Table) Parse(s string) error {
+func (s *Tables) Output(rootDir string) error {
+	schemaDir := filepath.Join(rootDir, "schema")
+	sqlDir := filepath.Join(schemaDir, "sql")
+	if _, err := os.Stat(sqlDir); os.IsNotExist(err) {
+		return errors.Trace(err)
+	}
+	yamlDir := filepath.Join(schemaDir, "yaml")
+	if _, err := os.Stat(yamlDir); os.IsNotExist(err) {
+		if err := os.Mkdir(yamlDir, 0755); err != nil {
+			return errors.Trace(err)
+		}
+		log.Printf("create directory: %s", yamlDir)
+	}
+
+	if err := filepath.Walk(sqlDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return errors.Trace(err)
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) != ".sql" {
+			return nil
+		}
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		t := &Table{}
+		if err := t.parse(string(b)); err != nil {
+			return errors.Trace(err)
+		}
+		*s = append(*s, t)
+		return nil
+	}); err != nil {
+		return errors.Trace(err)
+	}
+
+	for _, t := range *s {
+		ymlPath := filepath.Join(yamlDir, fmt.Sprintf("%s.yml", t.Name))
+		f, err := os.Create(ymlPath)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		enc := yaml.NewEncoder(f)
+		if err := enc.Encode(t); err != nil {
+			return errors.Trace(err)
+		}
+		if err := enc.Close(); err != nil {
+			return errors.Trace(err)
+		}
+		log.Printf("output: %s", ymlPath)
+	}
+
+	return nil
+}
+
+func (s *Tables) Load(rootPath string) error {
+	matches, err := filepath.Glob(filepath.Join(rootPath, "schema", "yaml", "*.yml"))
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	for _, path := range matches {
+		f, err := os.Open(path)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		dec := yaml.NewDecoder(f)
+		var t *Table
+		if err := dec.Decode(&t); err != nil {
+			return errors.Trace(err)
+		}
+		if err := f.Close(); err != nil {
+			return errors.Trace(err)
+		}
+		*s = append(*s, t)
+	}
+
+	return nil
+}
+
+func (s *Tables) Entities() *Entities {
+	es := Entities{}
+	for _, t := range *s {
+		e := &Entity{}
+		e.fromTable(t)
+		es = append(es, e)
+	}
+	return &es
+}
+
+func (s *Tables) Daos() *Daos {
+	ds := Daos{}
+	for _, t := range *s {
+		d := &Dao{}
+		d.fromTable(t)
+		ds = append(ds, d)
+	}
+	return &ds
+}
+
+func (s *Tables) Models() *Models {
+	ms := Models{}
+	for _, t := range *s {
+		m := &Model{}
+		m.fromTable(t)
+		ms = append(ms, m)
+	}
+	return &ms
+}
+
+func (t *Table) parse(s string) error {
 	stmt, err := sqlparser.Parse(s)
 	if err != nil {
 		return errors.Trace(err)

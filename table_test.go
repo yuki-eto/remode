@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
 `
 		ddl = strings.Replace(ddl, "''", "`", 4)
 		table := &Table{}
-		if err := table.Parse(ddl); err != nil {
+		if err := table.parse(ddl); err != nil {
 			t.Fatal(err)
 		}
 
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS items (
 );
 `
 		table := &Table{}
-		if err := table.Parse(ddl); err != nil {
+		if err := table.parse(ddl); err != nil {
 			t.Fatal(err)
 		}
 
